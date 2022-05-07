@@ -335,13 +335,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 816046635}
-  m_LocalRotation: {x: -0, y: 0.20503709, z: -0, w: 0.9787542}
-  m_LocalPosition: {x: -5.939762, y: -0.44279402, z: 6.770224}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalRotation: {x: -0.25901967, y: 0.19772682, z: 0.054261453, w: 0.9438583}
+  m_LocalPosition: {x: -5.68, y: -1.54, z: 7.36}
+  m_LocalScale: {x: 2.8686, y: 2.8686, z: 2.8686}
   m_Children: []
   m_Father: {fileID: 1257441910}
   m_RootOrder: 4
-  m_LocalEulerAnglesHint: {x: 0, y: 23.663, z: 0}
+  m_LocalEulerAnglesHint: {x: -30.691, y: 23.663, z: 0}
 --- !u!1 &845177322
 GameObject:
   m_ObjectHideFlags: 0
@@ -756,8 +756,8 @@ GameObject:
   - component: {fileID: 1699472389}
   - component: {fileID: 1699472388}
   - component: {fileID: 1699472387}
-  - component: {fileID: 1699472386}
   - component: {fileID: 1699472390}
+  - component: {fileID: 1699472386}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -765,8 +765,8 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!136 &1699472386
-CapsuleCollider:
+--- !u!143 &1699472386
+CharacterController:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -775,9 +775,13 @@ CapsuleCollider:
   m_Material: {fileID: 0}
   m_IsTrigger: 0
   m_Enabled: 1
-  m_Radius: 0.5
+  serializedVersion: 2
   m_Height: 2
-  m_Direction: 1
+  m_Radius: 0.5
+  m_SlopeLimit: 45
+  m_StepOffset: 0.3
+  m_SkinWidth: 0.08
+  m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!23 &1699472387
 MeshRenderer:
@@ -835,7 +839,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1699472385}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0.05301164, z: -0, w: 0.9985939}
   m_LocalPosition: {x: 0, y: 1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
@@ -843,7 +847,7 @@ Transform:
   - {fileID: 800655095}
   m_Father: {fileID: 0}
   m_RootOrder: 2
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: -6.078, z: 0}
 --- !u!114 &1699472390
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -858,6 +862,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   viewPoint: {fileID: 800655095}
   mouseSensitivity: 1
+  invertLook: 0
+  moveSpeed: 5
+  cc: {fileID: 0}
 --- !u!1 &1943772952
 GameObject:
   m_ObjectHideFlags: 0
