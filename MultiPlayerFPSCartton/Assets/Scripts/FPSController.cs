@@ -52,6 +52,10 @@ public class FPSController : MonoBehaviour
         cam = Camera.main;
         UIController.instance.weaponTempSlider.maxValue = maxHeat;
         SwitchGun();
+
+        Transform newTrans = SpawnManager.instance.GetSpawnPoint();
+        transform.position = newTrans.position;
+        transform.rotation = newTrans.rotation;
     }
 
     
@@ -209,9 +213,9 @@ public class FPSController : MonoBehaviour
 
         #endregion
 
-
-        //Gun Switching,using scroll control
-        if(Input.GetAxisRaw("Mouse ScrollWheel") > 0f) 
+        #region Weapon Switch System
+        //Gun Switching,using mouse scroll 
+        if (Input.GetAxisRaw("Mouse ScrollWheel") > 0f) 
         {
 
             selectedGun ++;
@@ -234,7 +238,18 @@ public class FPSController : MonoBehaviour
             SwitchGun();
         }
 
-
+        //number switch weapon
+        for(int i = 0; i < allGuns.Length; i++) 
+        {
+            if (Input.GetKeyDown((i + 1).ToString())) 
+            {
+                selectedGun = i;
+                SwitchGun();
+            
+            }
+           
+        }
+        #endregion
 
 
 
