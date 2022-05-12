@@ -25,7 +25,8 @@ public class Launcher : MonoBehaviourPunCallbacks
     public TMP_InputField roomNameInput;
 
     public GameObject roomScreen;
-    public TMP_Text roomNameText;
+    public TMP_Text roomNameText,playerNameLabel;
+    private List<TMP_Text> allPlayerNames = new List<TMP_Text>();
 
     public GameObject errorScreen;
     public TMP_Text errorText;
@@ -36,6 +37,12 @@ public class Launcher : MonoBehaviourPunCallbacks
     [SerializeField]List<RoomButton> allRoomButtons = new List<RoomButton>();
     private Dictionary<string, RoomInfo> cachedRoomsList = new Dictionary<string, RoomInfo>();
 
+    public GameObject nameInputScreen;
+    public TMP_InputField nameInput;
+    private bool hasSetNick;
+
+    public string levelToPlay;
+    public GameObject startButton;
 
 
 
@@ -60,6 +67,7 @@ public class Launcher : MonoBehaviourPunCallbacks
         roomScreen.SetActive(false);
         errorScreen.SetActive(false);
         roomBrowserScreen.SetActive(false);
+        nameInputScreen.SetActive(false);
     }
 
     // Secondly,once the connection to the server successed, it will call this methoed
@@ -69,6 +77,9 @@ public class Launcher : MonoBehaviourPunCallbacks
         //start to join a new lobby, which will for player waiting inside and decied which room to go next
         PhotonNetwork.JoinLobby();
 
+        //this will allow the photon network to be able to tell us which scene we should be going to
+        PhotonNetwork.AutomaticallySyncScene = true;
+
         loadingText.text = "Joining Lobby";
     }
 
@@ -77,7 +88,33 @@ public class Launcher : MonoBehaviourPunCallbacks
     {
         CloseMenus();
         menuButtons.SetActive(true);
+
+        //assigning name to joined player
+        PhotonNetwork.NickName = Random.Range(0,1000).ToString();
+
+        if (!hasSetNick) 
+        {
+            CloseMenus();
+            nameInputScreen.SetActive(true);
+
+            //if we already set up the player name before, then set the nick name to last input name
+            if (PlayerPrefs.HasKey("playerName")) 
+            {
+                nameInput.text = PlayerPrefs.GetString("playerName");
+            
+            }
+
+        }
+        else 
+        {
+            
+            PhotonNetwork.NickName = PlayerPrefs.GetString("playerName");
+        }
+        
     }
+
+
+
 
     //Button Functions for crating room menu
     public void OpenRoomCreate() 
@@ -110,6 +147,7 @@ public class Launcher : MonoBehaviourPunCallbacks
     }
 
     //forthly, this method will be called when we sucessfully joined a room
+    #region Room Joining system
     public override void OnJoinedRoom()
     {
         CloseMenus();
@@ -117,8 +155,70 @@ public class Launcher : MonoBehaviourPunCallbacks
 
         //get the current connected room's name
         roomNameText.text = PhotonNetwork.CurrentRoom.Name;
-        
+        ListAllPlayer();
+
+
+        //check if we are the master Client of the game 
+        if (PhotonNetwork.IsMasterClient) 
+        {
+            startButton.SetActive(true);
+        }
+        else 
+        {
+            startButton.SetActive(false);
+        }
     }
+
+    private void ListAllPlayer()
+    {
+        //clear previously information 
+        foreach (TMP_Text player in allPlayerNames)
+        {
+            Destroy(player.gameObject);
+
+
+        }
+        allPlayerNames.Clear();
+
+        //get the player information from photon player list
+        Player[] players = PhotonNetwork.PlayerList;
+
+        //show all the player names within the name list
+        for (int i = 0; i < players.Length; i++)
+        {
+            //creat an instance based on reference for each player name
+            TMP_Text newPlayerLabel = Instantiate(playerNameLabel, playerNameLabel.transform.parent);
+
+            newPlayerLabel.text = players[i].NickName;
+            newPlayerLabel.gameObject.SetActive(true);
+
+            allPlayerNames.Add(newPlayerLabel);
+
+        }
+
+    }
+
+    //update player list whenever a player enter the room
+    public override void OnPlayerEnteredRoom(Player newPlayer)
+    {
+        TMP_Text newPlayerLabel = Instantiate(playerNameLabel, playerNameLabel.transform.parent);
+
+        newPlayerLabel.text = newPlayer.NickName;
+        newPlayerLabel.gameObject.SetActive(true);
+
+        allPlayerNames.Add(newPlayerLabel);
+    }
+
+    //update player list whenever a player leave the room
+    public override void OnPlayerLeftRoom(Player otherPlayer)
+    {
+        //when someOne leave the room, just re-list all the current player
+        ListAllPlayer();
+    }
+
+
+    #endregion
+
 
 
     //if we failed to create room
@@ -277,6 +377,68 @@ public class Launcher : MonoBehaviourPunCallbacks
 
 
     #endregion
+
+
+    //connect to a room
+    public void JoinRoom(RoomInfo inputInfo) 
+    {
+        PhotonNetwork.JoinRoom(inputInfo.Name);
+
+        CloseMenus();
+        loadingText.text = "Joining...";
+        loadingScreen.SetActive(true);
+    
+    }
+
+
+    public void SetNickName() 
+    {
+        if (!string.IsNullOrEmpty(nameInput.text)) 
+        {
+
+            PhotonNetwork.NickName = nameInput.text;
+
+            PlayerPrefs.SetString("playerName", nameInput.text);
+
+            CloseMenus();
+            menuButtons.SetActive(true);
+            hasSetNick = true;
+        }
+       
+    }
+
+
+
+    //start game
+
+    public void StartGame() 
+    {
+        //this will tell the server to let all the other player load into the same level together with the host
+        PhotonNetwork.LoadLevel(levelToPlay);
+
+    }
+
+    //this method will be called when the master client leave the game, and then we need to switch the master client to other player
+    public override void OnMasterClientSwitched(Player newMasterClient)
+    {
+        //check if we are the master Client of the game 
+        if (PhotonNetwork.IsMasterClient)
+        {
+            startButton.SetActive(true);
+        }
+        else
+        {
+            startButton.SetActive(false);
+        }
+    }
+
+
+    //quit game
+    public void QuitGame() 
+    {
+
+        Application.Quit();
+    }
 
 
 }
