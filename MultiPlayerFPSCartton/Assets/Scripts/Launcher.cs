@@ -38,6 +38,7 @@ public class Launcher : MonoBehaviourPunCallbacks
     private Dictionary<string, RoomInfo> cachedRoomsList = new Dictionary<string, RoomInfo>();
 
     public GameObject nameInputScreen;
+    public GameObject roomTestButton;
     public TMP_InputField nameInput;
     private bool hasSetNick;
 
@@ -56,6 +57,11 @@ public class Launcher : MonoBehaviourPunCallbacks
 
         //First thing is using pre-setted photon server setting to connect to the photon newtork
         PhotonNetwork.ConnectUsingSettings();
+
+        //if we are in unity editor
+#if UNITY_EDITOR
+        roomTestButton.SetActive(true);
+#endif
     }
 
     //this method used to close all menus
@@ -433,6 +439,21 @@ public class Launcher : MonoBehaviourPunCallbacks
     }
 
 
+    public void QuickJoin() 
+    {
+        RoomOptions options = new RoomOptions();
+        options.MaxPlayers = 8;
+
+
+        PhotonNetwork.CreateRoom("Test",options);
+        CloseMenus();
+        loadingText.text = "Creating Room";
+        loadingScreen.SetActive(true);
+    
+    }
+
+
+
     //quit game
     public void QuitGame() 
     {
@@ -440,5 +461,6 @@ public class Launcher : MonoBehaviourPunCallbacks
         Application.Quit();
     }
 
+    
 
 }
