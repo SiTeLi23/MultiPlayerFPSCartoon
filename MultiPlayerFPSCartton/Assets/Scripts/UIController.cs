@@ -15,7 +15,14 @@ public class UIController : MonoBehaviour
 
 
 
+
     public TMP_Text OverHeatedMessage;
+
+
+    public GameObject deathScreen;
+    public TMP_Text deathText;
+    public Slider healthSlider;
+
 
     void Start()
     {
