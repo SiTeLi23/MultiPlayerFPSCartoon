@@ -328,7 +328,7 @@ public class FPSController : MonoBehaviourPunCallbacks
 
 
                 //On every version of this player, run that deal damage RPC
-                hit.collider.gameObject.GetPhotonView().RPC("DealDamage", RpcTarget.All,photonView.Owner.NickName, allGuns[selectedGun].shotDamage);
+                hit.collider.gameObject.GetPhotonView().RPC("DealDamage", RpcTarget.All,photonView.Owner.NickName, allGuns[selectedGun].shotDamage,PhotonNetwork.LocalPlayer.ActorNumber);
 
             }
             else
@@ -359,14 +359,14 @@ public class FPSController : MonoBehaviourPunCallbacks
     }
 
     [PunRPC]
-    public void DealDamage(string damager,int damageAmount) 
+    public void DealDamage(string damager,int damageAmount,int actor) 
     {
-        TakeDamage(damager,damageAmount);
+        TakeDamage(damager,damageAmount,actor);
 
     }
 
 
-    public void TakeDamage(string damager , int damageAmount) 
+    public void TakeDamage(string damager , int damageAmount,int actor) 
     {
         if (photonView.IsMine)
         {
@@ -378,6 +378,8 @@ public class FPSController : MonoBehaviourPunCallbacks
                 currentHealth = 0;
                 //Debug.Log(photonView.Owner.NickName + " has been hit by" + damager);
                 PlayerSpawner.instance.Die(damager);
+                //kill stat send in
+                MatchManager.instance.UpdateStatsSend(actor, 0, 1);
             }
 
            

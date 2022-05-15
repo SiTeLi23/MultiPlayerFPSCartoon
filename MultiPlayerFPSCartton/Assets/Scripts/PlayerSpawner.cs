@@ -54,7 +54,8 @@ public class PlayerSpawner : MonoBehaviour
 
         //update damager name
         UIController.instance.deathText.text = "You were killed by " + damager;
-
+        //because we are the one die, this time , we will send our own actor number
+        MatchManager.instance.UpdateStatsSend(PhotonNetwork.LocalPlayer.ActorNumber, 1, 1);
      
         if (player != null) 
         {

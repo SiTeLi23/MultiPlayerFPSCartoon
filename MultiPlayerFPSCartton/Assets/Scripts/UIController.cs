@@ -24,6 +24,13 @@ public class UIController : MonoBehaviour
     public Slider healthSlider;
 
 
+
+    public TMP_Text killsText,deathsText;
+
+    public GameObject leaderboard;
+    public LeaderboardPlayer leaderboardPlayerDisplay;
+    
+
     void Start()
     {
         
