@@ -29,6 +29,8 @@ public class UIController : MonoBehaviour
 
     public GameObject leaderboard;
     public LeaderboardPlayer leaderboardPlayerDisplay;
+
+    public GameObject EndScreen;
     
 
     void Start()

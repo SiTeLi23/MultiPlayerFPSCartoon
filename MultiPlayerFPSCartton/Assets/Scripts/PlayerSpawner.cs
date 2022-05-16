@@ -72,12 +72,20 @@ public class PlayerSpawner : MonoBehaviour
 
         //tell all client this player has been destroyed
         PhotonNetwork.Destroy(player);
+        player = null; //we want to make sure player setting to null,otherwise after being destroy, it will be missing component,so later it won't be respawned because it's not null
+
+
         UIController.instance.deathScreen.SetActive(true);
         yield return new WaitForSeconds(respawnTime);
       
         //respawn player
         UIController.instance.deathScreen.SetActive(false);
-        SpawnPlayer();
+
+        //if the game state is not end and we haven't spawned any player in the scene yet , we can reSpawn the player
+        if (MatchManager.instance.state == MatchManager.GameState.Playing && player==null)
+        {
+            SpawnPlayer();
+        }
 
 
     }

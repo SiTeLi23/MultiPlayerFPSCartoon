@@ -21,8 +21,8 @@ public class MatchManager : MonoBehaviourPunCallbacks,IOnEventCallback
     {
        NewPlayer,
        ListPlayers,
-       UpdateStat
-    
+       UpdateStat,
+       NextMatch
     }
 
 
@@ -36,6 +36,24 @@ public class MatchManager : MonoBehaviourPunCallbacks,IOnEventCallback
     //leaderboard list
     public List<LeaderboardPlayer> lboardPlayers = new List<LeaderboardPlayer>();
 
+    //game state
+      public enum GameState 
+    {
+       Waiting,
+       Playing,
+       Ending
+      
+
+    }
+
+    public int killsToWin = 3;
+    public Transform mapCamPoint;
+    public GameState state = GameState.Waiting;
+    public float waitAfterEnding = 5f;
+
+    //wheather the game gonna continue
+    public bool perertual;
+
 
     void Start()
     {
@@ -48,6 +66,9 @@ public class MatchManager : MonoBehaviourPunCallbacks,IOnEventCallback
         {
             //send playerEvent when joined the game
             NewPlayerSend(PhotonNetwork.NickName);
+
+            //if the match manager working correctly and a player has joined
+            state = GameState.Playing;
         
         }
 
@@ -57,7 +78,7 @@ public class MatchManager : MonoBehaviourPunCallbacks,IOnEventCallback
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Tab)) 
+        if (Input.GetKeyDown(KeyCode.Tab)&&state!=GameState.Ending) 
         {
             if (UIController.instance.leaderboard.activeInHierarchy) 
             {
@@ -109,6 +130,10 @@ public class MatchManager : MonoBehaviourPunCallbacks,IOnEventCallback
 
                 case EventCodes.UpdateStat:
                     UpdateStatsReceive(data);
+                    break;
+
+                case EventCodes.NextMatch:
+                    NextMatchReceive();
                     break;
 
 
@@ -174,7 +199,10 @@ public class MatchManager : MonoBehaviourPunCallbacks,IOnEventCallback
     {
         //pacakge allplayers list and send to all clients 
 
-        object[] package = new object[allPlayers.Count];
+        object[] package = new object[allPlayers.Count+1];
+
+        package[0] = state;
+
         for(int i =0; i < allPlayers.Count; i++) 
         {
             //create pieces information whish will stored each players' information within the list
@@ -186,7 +214,7 @@ public class MatchManager : MonoBehaviourPunCallbacks,IOnEventCallback
             piece[2] = allPlayers[i].kills;
             piece[3] = allPlayers[i].deaths;
 
-            package[i] = piece;
+            package[i + 1] = piece; //cause package[0] is used to store game state, so all the other piece information store place move to the next
         }
 
         //sendout the event that we have packed before
@@ -204,9 +232,11 @@ public class MatchManager : MonoBehaviourPunCallbacks,IOnEventCallback
         //we want to clear the previous information evertime when we updated the list
         allPlayers.Clear();
 
-      
+        //we want to convert the byte information into gameState first , then received the game state
+        state = (GameState)dataReceived[0];
 
-        for(int i = 0; i < dataReceived.Length; i++) 
+        //we want to start receiving player inforamtion from 1 because 0 stored the game state information already
+        for(int i = 1; i < dataReceived.Length; i++) 
         { 
             //pull out the piece data we received
 
@@ -223,9 +253,12 @@ public class MatchManager : MonoBehaviourPunCallbacks,IOnEventCallback
             if(PhotonNetwork.LocalPlayer.ActorNumber == player.actor) 
             {
                 //assigned the actor number that being added to the list , so we can have a shortcut reference later for ourselves
-                index = i;
+                index = i - 1;  //the reason we can't use index = 1 is because now our player information start at 1 but not 0 when 0 means game state information
             }
         }
+
+        //check the game state whenever we update our list throught network
+        StateCheck();
 
     }
 
@@ -288,6 +321,8 @@ public class MatchManager : MonoBehaviourPunCallbacks,IOnEventCallback
                 break; //once we find the correct one, stop looping around
             }
         }
+
+        ScoreCheck();//Check if we should end the game
 
     }
 
@@ -382,9 +417,164 @@ public class MatchManager : MonoBehaviourPunCallbacks,IOnEventCallback
 
 
 
+    #endregion
+
+
+    #region End Round System
+    public override void OnLeftRoom()
+    {
+       //the reason we keep this is because we need wait for photon to be fully disconnected itself
+        base.OnLeftRoom();
+        //make cursor able to see again when they back to main menu
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        //when we end the match, tell the player to leave the room and back to main scene
+        SceneManager.LoadScene(0);
+    }
+
+    //whenever a player update its state,we will check if the game should be end
+    void ScoreCheck() 
+    {
+        bool winnerFound = false;
+
+        foreach(PlayerInfo player in allPlayers) 
+        {
+           if(player.kills >= killsToWin && killsToWin > 0) 
+            {
+                winnerFound = true;
+               break;
+            }
+        
+        
+        }
+
+        if (winnerFound) 
+        {
+            //if we are the master client and the game is not end
+            if (PhotonNetwork.IsMasterClient&& state !=GameState.Ending) 
+            {
+                state = GameState.Ending;
+
+                //we want all players to be updated with the game state,so we sent this state to master
+                ListPlayersSend();
+            
+            }
+        
+        
+        }
+    
+    }
+
+
+    //check for state
+    void StateCheck() 
+    {
+      if(state == GameState.Ending) 
+        {
+            //if we are in the end game state, call end game function
+            EndGame();
+        
+        }
+    
+    }
+
+
+    void EndGame() 
+    {
+        //make sure it's definitely ending the game
+        state = GameState.Ending;
+
+
+        //if I am the master client,destroy everthing instantiated from network including players
+        if (PhotonNetwork.IsMasterClient) 
+        {
+            PhotonNetwork.DestroyAll();
+        
+        }
+
+        UIController.instance.EndScreen.SetActive(true);
+        ShowLeaderboard();
+
+        //make cursor able to see again when they back to main menu
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
+        //reset camera position to sky
+        Camera.main.transform.position = MatchManager.instance.mapCamPoint.position;
+        Camera.main.transform.rotation = MatchManager.instance.mapCamPoint.rotation;
+
+        StartCoroutine(EndCo());
+    
+    }
+
+
+    IEnumerator EndCo() 
+    {
+        yield return new WaitForSeconds(waitAfterEnding);
+
+
+        //if the game is not going to continue
+        if (!perertual)
+        {
+            //we don't want everybody syn scene at the end state , so we set it back to false because we set it to true when joined room
+            PhotonNetwork.AutomaticallySyncScene = false;
+            //this will triiger the OnLeftRoom, which will transfer us back to main menu scene
+            PhotonNetwork.LeaveRoom();
+        }
+
+        else 
+        {
+            //if the game is goint to continue which means that if player want to keep playing together,
+            if (PhotonNetwork.IsMasterClient) 
+            {
+                NextMatchSend();
+            }
+        }
+
+
+        yield return null;
+    
+    }
+
+    public void NextMatchSend() 
+    {
+      
+        PhotonNetwork.RaiseEvent(
+            (byte)EventCodes.NextMatch, //we need to convert our own eventcode back into byte after synchornize it in OnEvent() so photon understand what it is
+            null,   // null means there's no data sending with this
+            new RaiseEventOptions { Receivers = ReceiverGroup.All }, //make sure only the all client can receive a new player information
+            new SendOptions { Reliability = true } //tell the server that this is something we want it to be reliable so it will be definitely  able to be sent to the network and all players later
+            );
+
+    }
+
+    public void NextMatchReceive() 
+    {
+        state = GameState.Playing;
+        UIController.instance.EndScreen.SetActive(false);
+        UIController.instance.leaderboard.SetActive(false);
+
+        //reset all players record
+        foreach(PlayerInfo player in allPlayers) 
+        {
+            player.kills = 0;
+            player.deaths = 0;
+        
+        }
+
+        UpdateStatsDisplay();
+
+        //local player spawner for each individual person running the game will respawn a player
+        PlayerSpawner.instance.SpawnPlayer();
+    
+    }
+
+
 
 
     #endregion
+
+
 
     //make sure update network player list whenever a player left game,forced to close or crashes
     public override void OnPlayerLeftRoom(Player otherPlayer)

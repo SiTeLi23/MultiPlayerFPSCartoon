@@ -303,8 +303,19 @@ public class FPSController : MonoBehaviourPunCallbacks
     {
         if (photonView.IsMine)
         {
-            cam.transform.position = viewPoint.position;
-            cam.transform.rotation = viewPoint.rotation;
+            if (MatchManager.instance.state == MatchManager.GameState.Playing)
+            {
+
+                cam.transform.position = viewPoint.position;
+                cam.transform.rotation = viewPoint.rotation;
+            }
+
+            else 
+            {
+                cam.transform.position = MatchManager.instance.mapCamPoint.position;
+                cam.transform.rotation = MatchManager.instance.mapCamPoint.rotation;
+
+            }
         }
     }
 

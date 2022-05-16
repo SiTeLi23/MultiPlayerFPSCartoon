@@ -40,7 +40,7 @@ public class Launcher : MonoBehaviourPunCallbacks
     public GameObject nameInputScreen;
     public GameObject roomTestButton;
     public TMP_InputField nameInput;
-    private bool hasSetNick;
+    public static bool hasSetNick;
 
     public string levelToPlay;
     public GameObject startButton;
@@ -62,6 +62,11 @@ public class Launcher : MonoBehaviourPunCallbacks
 #if UNITY_EDITOR
         roomTestButton.SetActive(true);
 #endif
+
+        //make cursor able to see again when they back to main menu
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+
     }
 
     //this method used to close all menus
