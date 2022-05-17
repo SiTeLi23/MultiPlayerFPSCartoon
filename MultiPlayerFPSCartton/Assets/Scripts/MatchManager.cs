@@ -22,7 +22,8 @@ public class MatchManager : MonoBehaviourPunCallbacks,IOnEventCallback
        NewPlayer,
        ListPlayers,
        UpdateStat,
-       NextMatch
+       NextMatch,
+       TimerSync
     }
 
 
@@ -54,6 +55,10 @@ public class MatchManager : MonoBehaviourPunCallbacks,IOnEventCallback
     //wheather the game gonna continue
     public bool perertual;
 
+    public float matchLength = 180f;
+    private float currentMatchTime;
+    private float sendTimer; //make is send time every second the current time the game should have
+
 
     void Start()
     {
@@ -69,6 +74,17 @@ public class MatchManager : MonoBehaviourPunCallbacks,IOnEventCallback
 
             //if the match manager working correctly and a player has joined
             state = GameState.Playing;
+
+            //set up remaining time
+            SetUpTimer();
+
+            //make sure client side timer won't start from time length 
+            if (!PhotonNetwork.IsMasterClient) 
+            {
+                //do not show time first
+                UIController.instance.timerText.gameObject.SetActive(false);
+            }
+
         
         }
 
@@ -78,6 +94,7 @@ public class MatchManager : MonoBehaviourPunCallbacks,IOnEventCallback
     // Update is called once per frame
     void Update()
     {
+        //show leader board
         if (Input.GetKeyDown(KeyCode.Tab)&&state!=GameState.Ending) 
         {
             if (UIController.instance.leaderboard.activeInHierarchy) 
@@ -92,6 +109,55 @@ public class MatchManager : MonoBehaviourPunCallbacks,IOnEventCallback
             
             }
         
+        }
+
+        //updating timer constantly
+
+        //if we are master client,
+        if (PhotonNetwork.IsMasterClient)
+        {
+
+            //counting down start
+            if (currentMatchTime >= 0f && state == GameState.Playing)
+            {
+                currentMatchTime -= Time.deltaTime;
+
+                if (currentMatchTime <= 0f)
+                {
+                    currentMatchTime = 0f;
+
+                    state = GameState.Ending;
+
+                    //if we are the master client , we want tell everyone to enter game end state
+
+
+                    //keep state updated
+                    ListPlayersSend();
+
+                    //state check although it will also be called when we updated our state data ,just double safety
+                    StateCheck();
+
+
+
+                }
+
+                UpdateTimerDisplay();
+
+
+                
+                sendTimer -= Time.deltaTime;
+                if(sendTimer <= 0) 
+                {
+                    //the reason why we not directly set sendtimer to 1,but let it back to 1 from 0
+                    //is because it can cause in accuracy at the end of a huge a mount of time if it start with 1,
+                    //while let it start from 0 will average this inaccuray a bit
+                    sendTimer += 1;
+
+                    //send out information
+                    TimerSend();
+                }
+
+            }
         }
         
     }
@@ -134,6 +200,10 @@ public class MatchManager : MonoBehaviourPunCallbacks,IOnEventCallback
 
                 case EventCodes.NextMatch:
                     NextMatchReceive();
+                    break;
+
+                case EventCodes.TimerSync:
+                    TimerReceive(data);
                     break;
 
 
@@ -527,7 +597,34 @@ public class MatchManager : MonoBehaviourPunCallbacks,IOnEventCallback
             //if the game is goint to continue which means that if player want to keep playing together,
             if (PhotonNetwork.IsMasterClient) 
             {
-                NextMatchSend();
+                //if game mode set to stay in same map after end round
+                if (!Launcher.instance.changeMapBetweenRounds)
+                {
+
+                    NextMatchSend();
+                }
+                //if game mode set to can be changed to random map after end round
+                else
+                {
+
+                    int newLevel = Random.Range(0, Launcher.instance.allMaps.Length);
+
+                    if (Launcher.instance.allMaps[newLevel] == SceneManager.GetActiveScene().name) 
+                    {
+                        //if it's same map, just rematch and no need to reload to the scene again
+                        NextMatchSend();
+                    
+                    }
+                    else 
+                    {
+                        //if it's not the same map, load to new map
+                        PhotonNetwork.LoadLevel(Launcher.instance.allMaps[newLevel]);
+                    
+                    }
+                }
+
+
+                
             }
         }
 
@@ -566,10 +663,66 @@ public class MatchManager : MonoBehaviourPunCallbacks,IOnEventCallback
 
         //local player spawner for each individual person running the game will respawn a player
         PlayerSpawner.instance.SpawnPlayer();
+
+        //set up timer if we are in the same map
+        SetUpTimer();
     
     }
 
 
+    #endregion
+
+
+
+    #region Match Timer System
+    public void SetUpTimer() 
+    {
+        //as long as we set up our match time, we are going to set up timer
+        if (matchLength > 0) 
+        {
+            currentMatchTime = matchLength;
+
+            UpdateTimerDisplay();
+        }
+
+    }
+
+
+    public void UpdateTimerDisplay() 
+    {
+        //convert number as total seconds amount and make it become time
+        var timeToDisplay = System.TimeSpan.FromSeconds(currentMatchTime);
+
+        //"00" means no matter what we will display here, it will at least be two number
+        UIController.instance.timerText.text = timeToDisplay.Minutes.ToString("00") + ":" + timeToDisplay.Seconds.ToString("00");
+    
+    }
+
+
+    public void TimerSend() 
+    {
+        //send a package which inclue current time
+        object[] package = new object[] { (int)currentMatchTime,state};  //we conver the time to int because it's a small number to send
+
+        PhotonNetwork.RaiseEvent(
+           (byte)EventCodes.TimerSync, //we need to convert our own eventcode back into byte after synchornize it in OnEvent() so photon understand what it is
+           package,   // null means there's no data sending with this
+           new RaiseEventOptions { Receivers = ReceiverGroup.All }, //make sure only the all client can receive a new player information
+           new SendOptions { Reliability = true } //tell the server that this is something we want it to be reliable so it will be definitely  able to be sent to the network and all players later
+           );
+    }
+
+
+    public void TimerReceive(object[] dataReceived) 
+    {
+        //we pull out the timer as a int, and it will automatically transformed to float
+        currentMatchTime = (int)dataReceived[0];
+        state = (GameState)dataReceived[1];
+
+        UpdateTimerDisplay();
+
+        UIController.instance.timerText.gameObject.SetActive(true);
+    }
 
 
     #endregion

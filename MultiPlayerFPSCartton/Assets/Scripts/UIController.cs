@@ -31,6 +31,9 @@ public class UIController : MonoBehaviour
     public LeaderboardPlayer leaderboardPlayerDisplay;
 
     public GameObject EndScreen;
+
+    //timer
+    public TMP_Text timerText;
     
 
     void Start()

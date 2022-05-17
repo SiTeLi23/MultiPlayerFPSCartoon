@@ -1721,6 +1721,10 @@ PrefabInstance:
       propertyPath: mapCamPoint
       value: 
       objectReference: {fileID: 1861149510}
+    - target: {fileID: 1288929354454634864, guid: 6cf7060c126d77f41ae6906f5037067f, type: 3}
+      propertyPath: matchLength
+      value: 15
+      objectReference: {fileID: 0}
     - target: {fileID: 1288929354454634865, guid: 6cf7060c126d77f41ae6906f5037067f, type: 3}
       propertyPath: m_Name
       value: MatchManager
@@ -5929,6 +5933,10 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 6179974050984912019, guid: ad7f25a4314c6114eaf556636e46997a, type: 3}
       propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6179974051049470047, guid: ad7f25a4314c6114eaf556636e46997a, type: 3}
+      propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6179974051754673412, guid: ad7f25a4314c6114eaf556636e46997a, type: 3}
