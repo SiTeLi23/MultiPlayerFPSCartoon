@@ -25,7 +25,7 @@ public class PlayerSpawner : MonoBehaviour
         //check if we have already connected to the server
         if (PhotonNetwork.IsConnected) 
         {
-
+            Debug.Log("Original spawn");
             SpawnPlayer();
         }
         
@@ -41,8 +41,9 @@ public class PlayerSpawner : MonoBehaviour
     public void SpawnPlayer() 
     {
         Transform spawnPoint = SpawnManager.instance.GetSpawnPoint();
-
-       player= PhotonNetwork.Instantiate(playerPrefab.name,spawnPoint.position,spawnPoint.rotation);
+       
+        player = PhotonNetwork.Instantiate(playerPrefab.name,spawnPoint.position,spawnPoint.rotation);
+       
     
     }
 
@@ -84,6 +85,7 @@ public class PlayerSpawner : MonoBehaviour
         //if the game state is not end and we haven't spawned any player in the scene yet , we can reSpawn the player
         if (MatchManager.instance.state == MatchManager.GameState.Playing && player==null)
         {
+           
             SpawnPlayer();
         }
 

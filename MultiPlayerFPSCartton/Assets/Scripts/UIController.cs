@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using Photon.Pun;
 public class UIController : MonoBehaviour
 {
     public static UIController instance;
@@ -34,6 +35,9 @@ public class UIController : MonoBehaviour
 
     //timer
     public TMP_Text timerText;
+
+    //option screen
+    public GameObject optionsScreen;
     
 
     void Start()
@@ -45,9 +49,48 @@ public class UIController : MonoBehaviour
 
     void Update()
     {
+
+        if (Input.GetKeyDown(KeyCode.Escape)) 
+        {
+            ShowHideOption();
         
+        }
+
+        //makesure when option menu pop out , we can see the cursor
+        if (optionsScreen.activeInHierarchy && Cursor.lockState!=CursorLockMode.None) 
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        
+        }
+
     }
 
 
+    //option menu button function
+    public void ShowHideOption() 
+    {
+        if (!optionsScreen.activeInHierarchy) 
+        {
+            optionsScreen.SetActive(true);
+        }
+        else 
+        {
+            optionsScreen.SetActive(false);
+        }
+    
+    }
+
+    public void ReturnToMainMenu() 
+    {
+        //make sure when we leave the room, not syning other people to leavw together
+        PhotonNetwork.AutomaticallySyncScene = false;
+        PhotonNetwork.LeaveRoom();
+    }
+
+    public void QuitGame() 
+    {
+        Application.Quit();
+    }
 
 }

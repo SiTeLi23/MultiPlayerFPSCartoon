@@ -134,8 +134,8 @@ public class MatchManager : MonoBehaviourPunCallbacks,IOnEventCallback
                     //keep state updated
                     ListPlayersSend();
 
-                    //state check although it will also be called when we updated our state data ,just double safety
-                    StateCheck();
+                    
+                    //StateCheck();
 
 
 
@@ -151,7 +151,7 @@ public class MatchManager : MonoBehaviourPunCallbacks,IOnEventCallback
                     //the reason why we not directly set sendtimer to 1,but let it back to 1 from 0
                     //is because it can cause in accuracy at the end of a huge a mount of time if it start with 1,
                     //while let it start from 0 will average this inaccuray a bit
-                    sendTimer += 1;
+                    sendTimer += 1f;
 
                     //send out information
                     TimerSend();
@@ -327,8 +327,10 @@ public class MatchManager : MonoBehaviourPunCallbacks,IOnEventCallback
             }
         }
 
-        //check the game state whenever we update our list throught network
-        StateCheck();
+      
+            //check the game state whenever we update our list throught network
+            StateCheck();
+       
 
     }
 
@@ -611,12 +613,23 @@ public class MatchManager : MonoBehaviourPunCallbacks,IOnEventCallback
 
                     if (Launcher.instance.allMaps[newLevel] == SceneManager.GetActiveScene().name) 
                     {
+                        if (PhotonNetwork.IsMasterClient)
+                        {
+                            PhotonNetwork.DestroyAll();
+                        }
+
                         //if it's same map, just rematch and no need to reload to the scene again
                         NextMatchSend();
-                    
+                        //PhotonNetwork.LoadLevel(Launcher.instance.allMaps[newLevel]);
+
                     }
                     else 
                     {
+                        if (PhotonNetwork.IsMasterClient)
+                        {
+                            PhotonNetwork.DestroyAll();
+                        }
+
                         //if it's not the same map, load to new map
                         PhotonNetwork.LoadLevel(Launcher.instance.allMaps[newLevel]);
                     
@@ -662,6 +675,8 @@ public class MatchManager : MonoBehaviourPunCallbacks,IOnEventCallback
         UpdateStatsDisplay();
 
         //local player spawner for each individual person running the game will respawn a player
+        Debug.Log("Local player respawn");
+       
         PlayerSpawner.instance.SpawnPlayer();
 
         //set up timer if we are in the same map

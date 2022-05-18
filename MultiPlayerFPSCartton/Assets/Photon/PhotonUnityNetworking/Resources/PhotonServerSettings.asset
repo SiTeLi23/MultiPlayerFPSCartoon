@@ -41,6 +41,10 @@ MonoBehaviour:
   - RespawnSpaceship
   - DealDamage
   - SetGun
+  - ShootingSoundSyn
+  - StepFastSyn
+  - StepSlowSyn
+  - StopStepSyn
   DisableAutoOpenWizard: 1
   ShowSettings: 1
   DevRegionSetOnce: 1

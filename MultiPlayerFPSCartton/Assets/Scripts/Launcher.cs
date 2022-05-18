@@ -59,8 +59,11 @@ public class Launcher : MonoBehaviourPunCallbacks
         loadingScreen.SetActive(true);
         loadingText.text = "Connecting To Network....";
 
-        //First thing is using pre-setted photon server setting to connect to the photon newtork
-        PhotonNetwork.ConnectUsingSettings();
+        if (!PhotonNetwork.IsConnected)
+        {
+            //First thing is using pre-setted photon server setting to connect to the photon newtork
+            PhotonNetwork.ConnectUsingSettings();
+        }
 
         //if we are in unity editor
 #if UNITY_EDITOR
